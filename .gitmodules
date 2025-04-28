@@ -1,0 +1,6 @@
+[submodule "vendor/crazyflie-firmware"]
+	path = vendor/crazyflie-firmware
+	url = https://github.com/bitcraze/crazyflie-firmware.git
+[submodule "vendor/isaaclab"]
+	path = vendor/isaaclab
+	url = git@github.com:mettz/IsaacLab.git
