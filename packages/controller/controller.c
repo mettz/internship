@@ -1,12 +1,5 @@
-void controllerOutOfTreeInit(void) {
+void controllerOutOfTreeInit(void) {}
 
-}
+void controllerOutOfTree(void) {}
 
-void controllerOutOfTree(void) {
-    
-}
-
-void controllerOutOfTreeTest(void) {
-
-}
-
+void controllerOutOfTreeTest(void) {}

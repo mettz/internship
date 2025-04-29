@@ -11,7 +11,7 @@ This repository contains an experimental toolchain for training and deploying De
 The C-model generation process is a crucial step in the deployment of DRL agents on the Crazyflie 2.1 drone. The C-model is a lightweight representation of the trained DRL agent that can be executed on the STM32 microcontroller. The C-model generation can be performed with the following command:
 
 ```bash
-stedgeai generate -m <model_path> -o <output_dir> -w <workspace_dir> --target stm32f5 --c-api st-ai
+stedgeai generate -m <model_path> -o <output_dir> -w <workspace_dir> --target stm32f4 --c-api st-ai
 ```
 
 Where:
