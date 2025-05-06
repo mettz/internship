@@ -1,0 +1,191 @@
+ST Edge AI Core v2.1.0-20194 329b0e98d
+Created date          : 2025-05-06 17:11:34
+Parameters            : generate -m policy.onnx -o packages/controller/src/network --target stm32f4 --c-api st-ai
+
+Exec/report summary (generate)
+----------------------------------------------------------------------------------------
+model file         :   /home/mettz/dev/uni/internship/policy.onnx                       
+type               :   onnx                                                             
+c_name             :   network                                                          
+compression        :   lossless                                                         
+options            :   allocate-inputs, allocate-outputs, use-lite-runtime, use-st-ai   
+optimization       :   balanced                                                         
+target/series      :   stm32f4                                                          
+workspace dir      :   /home/mettz/dev/uni/internship/st_ai_ws                          
+output dir         :   /home/mettz/dev/uni/internship/packages/controller/src/network   
+model_fmt          :   float                                                            
+model_name         :   policy                                                           
+model_hash         :   0xf8070b17919cf5a567dce60e47d2a201                               
+params #           :   5,252 items (20.52 KiB)                                          
+----------------------------------------------------------------------------------------
+input 1/1          :   'obs', f32(1x12), 48 Bytes, activations                          
+output 1/1         :   'actions', f32(1x4), 16 Bytes, activations                       
+macc               :   6,660                                                            
+weights (ro)       :   21,008 B (20.52 KiB) (1 segment)                                 
+activations (rw)   :   512 B (512 B) (1 segment) *                                      
+ram (total)        :   512 B (512 B) = 512 + 0 + 0                                      
+----------------------------------------------------------------------------------------
+(*) 'input'/'output' buffers can be used from the activations buffer
+
+Model name - policy
+------ ---------------------------------------------------- ------------- -------------- ------- -------------------------------- --- --------------- ----------------- ------------------ 
+m_id   layer (type,original)                                oshape        param/size        macc                     connected to   | c_size          c_macc            c_type             
+------ ---------------------------------------------------- ------------- -------------- ------- -------------------------------- --- --------------- ----------------- ------------------ 
+1      actor_net_container_0_weight (Placeholder, Gemm)     [b:64,c:12]   768/3,072                                                 | +256(+8.3%)     +832(+100.0%)     Dense_[0]          
+       actor_net_container_0_bias (Placeholder, Gemm)       [b:64]        64/256                                                    | -256(-100.0%)                     
+------ ---------------------------------------------------- ------------- -------------- ------- -------------------------------- --- --------------- ----------------- ------------------ 
+3      actor_net_container_2_weight (Placeholder, Gemm)     [b:64,c:64]   4,096/16,384                                              | +256(+1.6%)     +4,160(+100.0%)   Dense_[2]          
+       actor_net_container_2_bias (Placeholder, Gemm)       [b:64]        64/256                                                    | -256(-100.0%)                     
+------ ---------------------------------------------------- ------------- -------------- ------- -------------------------------- --- --------------- ----------------- ------------------ 
+5      actor_policy_layer_weight (Placeholder, Gemm)        [b:4,c:64]    256/1,024                                                 | +16(+1.6%)      +260(+100.0%)     Dense_[o][4]       
+       actor_policy_layer_bias (Placeholder, Gemm)          [b:4]         4/16                                                      | -16(-100.0%)                      
+------ ---------------------------------------------------- ------------- -------------- ------- -------------------------------- --- --------------- ----------------- ------------------ 
+0      obs (Input, )                                        [b:1,c:12]                                                              |                                   
+------ ---------------------------------------------------- ------------- -------------- ------- -------------------------------- --- --------------- ----------------- ------------------ 
+1      _actor_net_contain..m_output_0 (Gemm, Gemm)          [b:1,c:64]                       832                              obs   |                 -832(-100.0%)     
+                                                                                                     actor_net_container_0_weight   | 
+                                                                                                       actor_net_container_0_bias   | 
+------ ---------------------------------------------------- ------------- -------------- ------- -------------------------------- --- --------------- ----------------- ------------------ 
+2      _actor_net_contain..u_output_0 (Nonlinearity, Elu)   [b:1,c:64]                       768   _actor_net_contain..m_output_0   |                 -64(-8.3%)        Nonlinearity_[1]   
+------ ---------------------------------------------------- ------------- -------------- ------- -------------------------------- --- --------------- ----------------- ------------------ 
+3      _actor_net_contain..m_output_0 (Gemm, Gemm)          [b:1,c:64]                     4,160   _actor_net_contain..u_output_0   |                 -4,160(-100.0%)   
+                                                                                                     actor_net_container_2_weight   | 
+                                                                                                       actor_net_container_2_bias   | 
+------ ---------------------------------------------------- ------------- -------------- ------- -------------------------------- --- --------------- ----------------- ------------------ 
+4      _actor_net_contain..u_output_0 (Nonlinearity, Elu)   [b:1,c:64]                       768   _actor_net_contain..m_output_0   |                 -64(-8.3%)        Nonlinearity_[3]   
+------ ---------------------------------------------------- ------------- -------------- ------- -------------------------------- --- --------------- ----------------- ------------------ 
+5      actions (Gemm, Gemm)                                 [b:1,c:4]                        260   _actor_net_contain..u_output_0   |                 -260(-100.0%)     
+                                                                                                        actor_policy_layer_weight   | 
+                                                                                                          actor_policy_layer_bias   | 
+------ ---------------------------------------------------- ------------- -------------- ------- -------------------------------- --- --------------- ----------------- ------------------ 
+model/c-model: macc=6,788/6,660 -128(-1.9%) weights=21,008/21,008  activations=--/512 io=--/0
+
+
+
+Generated C-graph summary
+------------------------------------------------------------------------------------------------------------------------
+model name            : policy
+c-name                : network
+c-node #              : 5
+c-array #             : 12
+activations size      : 512 (1 segment)
+weights size          : 21008 (1 segment)
+macc                  : 6660
+inputs                : ['obs_output']
+outputs               : ['actions_output']
+
+C-Arrays (12)
+------ ------------------------------------------------------------ ------------ ------------------------- ------------- --------- 
+c_id   name (*_array)                                               item/size    domain/mem-pool           c-type        comment   
+------ ------------------------------------------------------------ ------------ ------------------------- ------------- --------- 
+0      _actor_net_container_net_container_0_Gemm_output_0_bias      64/256       weights/weights           const float             
+1      _actor_net_container_net_container_0_Gemm_output_0_output    64/256       activations/**default**   float                   
+2      _actor_net_container_net_container_0_Gemm_output_0_weights   768/3072     weights/weights           const float             
+3      _actor_net_container_net_container_1_Elu_output_0_output     64/256       activations/**default**   float                   
+4      _actor_net_container_net_container_2_Gemm_output_0_bias      64/256       weights/weights           const float             
+5      _actor_net_container_net_container_2_Gemm_output_0_output    64/256       activations/**default**   float                   
+6      _actor_net_container_net_container_2_Gemm_output_0_weights   4096/16384   weights/weights           const float             
+7      _actor_net_container_net_container_3_Elu_output_0_output     64/256       activations/**default**   float                   
+8      actions_bias                                                 4/16         weights/weights           const float             
+9      actions_output                                               4/16         activations/**default**   float         /output   
+10     actions_weights                                              256/1024     weights/weights           const float             
+11     obs_output                                                   12/48        activations/**default**   float         /input    
+------ ------------------------------------------------------------ ------------ ------------------------- ------------- --------- 
+
+C-Layers (5)
+------ ---------------------------------------------------- ---- --------------- ------ ------- --------------------------------------------------------------- ------------------ 
+c_id   name (*_layer)                                       id   layer_type      macc   rom     tensors                                                         shape (array id)   
+------ ---------------------------------------------------- ---- --------------- ------ ------- --------------------------------------------------------------- ------------------ 
+0      _actor_net_container_net_container_0_Gemm_output_0   1    Dense           832    3328    I: obs_output                                                   f32(1x12) (11)     
+                                                                                                W: _actor_net_container_net_container_0_Gemm_output_0_weights   f32(64x12) (2)     
+                                                                                                W: _actor_net_container_net_container_0_Gemm_output_0_bias      f32(64) (0)        
+                                                                                                O: _actor_net_container_net_container_0_Gemm_output_0_output    f32(1x64) (1)      
+------ ---------------------------------------------------- ---- --------------- ------ ------- --------------------------------------------------------------- ------------------ 
+1      _actor_net_container_net_container_1_Elu_output_0    2    Nonlinearity    704    0       I: _actor_net_container_net_container_0_Gemm_output_0_output    f32(1x64) (1)      
+                                                                                                O: _actor_net_container_net_container_1_Elu_output_0_output     f32(1x64) (3)      
+------ ---------------------------------------------------- ---- --------------- ------ ------- --------------------------------------------------------------- ------------------ 
+2      _actor_net_container_net_container_2_Gemm_output_0   3    Dense           4160   16640   I: _actor_net_container_net_container_1_Elu_output_0_output     f32(1x64) (3)      
+                                                                                                W: _actor_net_container_net_container_2_Gemm_output_0_weights   f32(64x64) (6)     
+                                                                                                W: _actor_net_container_net_container_2_Gemm_output_0_bias      f32(64) (4)        
+                                                                                                O: _actor_net_container_net_container_2_Gemm_output_0_output    f32(1x64) (5)      
+------ ---------------------------------------------------- ---- --------------- ------ ------- --------------------------------------------------------------- ------------------ 
+3      _actor_net_container_net_container_3_Elu_output_0    4    Nonlinearity    704    0       I: _actor_net_container_net_container_2_Gemm_output_0_output    f32(1x64) (5)      
+                                                                                                O: _actor_net_container_net_container_3_Elu_output_0_output     f32(1x64) (7)      
+------ ---------------------------------------------------- ---- --------------- ------ ------- --------------------------------------------------------------- ------------------ 
+4      actions                                              5    Dense           260    1040    I: _actor_net_container_net_container_3_Elu_output_0_output     f32(1x64) (7)      
+                                                                                                W: actions_weights                                              f32(4x64) (10)     
+                                                                                                W: actions_bias                                                 f32(4) (8)         
+                                                                                                O: actions_output                                               f32(1x4) (9)       
+------ ---------------------------------------------------- ---- --------------- ------ ------- --------------------------------------------------------------- ------------------ 
+
+
+
+Number of operations per c-layer
+------- ------ ----------------------------------------------- ------- -------------- 
+c_id    m_id   name (type)                                         #op           type 
+------- ------ ----------------------------------------------- ------- -------------- 
+0       1      _actor_net_contain..m_output_0 (Dense)              832   smul_f32_f32 
+1       2      _actor_net_contain..u_output_0 (Nonlinearity)       704     op_f32_f32 
+2       3      _actor_net_contain..m_output_0 (Dense)            4,160   smul_f32_f32 
+3       4      _actor_net_contain..u_output_0 (Nonlinearity)       704     op_f32_f32 
+4       5      actions (Dense)                                     260   smul_f32_f32 
+------- ------ ----------------------------------------------- ------- -------------- 
+total                                                            6,660 
+
+Number of operation types
+---------------- ------- ----------- 
+operation type         #           % 
+---------------- ------- ----------- 
+smul_f32_f32       5,252       78.9% 
+op_f32_f32         1,408       21.1% 
+
+Complexity report (model)
+------ ------------------------------------------ ------------------------- ------------------------- ------ 
+m_id   name                                       c_macc                    c_rom                     c_id   
+------ ------------------------------------------ ------------------------- ------------------------- ------ 
+1      actor_net_container_0_weight               ||||              12.5%   ||||              15.8%   [0]    
+3      actor_net_container_2_weight               ||||||||||||||||  62.5%   ||||||||||||||||  79.2%   [2]    
+5      actor_policy_layer_weight                  |                  3.9%   |                  5.0%   [4]    
+2      _actor_net_container_net_con..u_output_0   |||               10.6%   |                  0.0%   [1]    
+4      _actor_net_container_net_con..u_output_0   |||               10.6%   |                  0.0%   [3]    
+------ ------------------------------------------ ------------------------- ------------------------- ------ 
+macc=6,660 weights=21,008 act=512 ram_io=0
+ 
+ Requested memory size by section - "stm32f4" target
+ ------------------------------ ------- -------- ------ ----- 
+ module                            text   rodata   data   bss 
+ ------------------------------ ------- -------- ------ ----- 
+ network.o                        1,046       48      0     0 
+ NetworkRuntime1010_CM4_GCC.a       796        0      0     0 
+ lib (toolchain)*                   756       24      0     0 
+ ------------------------------ ------- -------- ------ ----- 
+ RT total**                       2,598       72      0     0 
+ ------------------------------ ------- -------- ------ ----- 
+ weights                              0   21,008      0     0 
+ activations                          0        0      0   512 
+ states                               0        0      0     0 
+ io                                   0        0      0     0 
+ ------------------------------ ------- -------- ------ ----- 
+ TOTAL                            2,598   21,080      0   512 
+ ------------------------------ ------- -------- ------ ----- 
+ *  toolchain objects (libm/libgcc*)
+ ** RT AI runtime objects (kernels+infrastructure)
+  
+  Summary - "stm32f4" target
+  --------------------------------------------------
+               FLASH (ro)      %*   RAM (rw)      % 
+  --------------------------------------------------
+  RT total          2,670   11.3%          0   0.0% 
+  --------------------------------------------------
+  TOTAL            23,678                512        
+  --------------------------------------------------
+  *  rt/total
+
+
+Generated files (5)
+---------------------------------------------------------------------------------- 
+/home/mettz/dev/uni/internship/packages/controller/src/network/network_data.h      
+/home/mettz/dev/uni/internship/packages/controller/src/network/network_data.c      
+/home/mettz/dev/uni/internship/packages/controller/src/network/network.h           
+/home/mettz/dev/uni/internship/packages/controller/src/network/network.c           
+/home/mettz/dev/uni/internship/packages/controller/src/network/network_details.h   
