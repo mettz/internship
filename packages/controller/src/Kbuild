@@ -1,4 +1,4 @@
 obj-y += network/network.o network/network_data.o
 obj-y += controller.o
 
-ldflags-y += -Wl,--whole-archive /home/mettz/ST/STEdgeAI/2.1/Middlewares/ST/AI/Lib/GCC/ARMCortexM4/NetworkRuntime1010_CM4_GCC.a -Wl,--no-whole-archive
+ldflags-y += -Wl,--whole-archive $(STEDGEAI_CORE_DIR)/Middlewares/ST/AI/Lib/GCC/ARMCortexM4/NetworkRuntime1010_CM4_GCC.a -Wl,--no-whole-archive

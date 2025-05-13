@@ -2,6 +2,10 @@ CRAZYFLIE_BASE := ../../vendor/crazyflie-firmware
 
 OOT_CONFIG := $(PWD)/config
 
-EXTRA_CFLAGS += -I/home/mettz/ST/STEdgeAI/2.1/Middlewares/ST/AI/Inc 
+ifndef STEDGEAI_CORE_DIR
+$(error STEDGEAI_CORE_DIR is not set. Please set it to the path of the STEdge AI Core SDK)
+endif
+
+EXTRA_CFLAGS += -I$(STEDGEAI_CORE_DIR)/Middlewares/ST/AI/Inc
 
 include $(CRAZYFLIE_BASE)/tools/make/oot.mk
