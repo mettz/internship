@@ -10,7 +10,7 @@ from cflib.crazyflie.syncLogger import SyncLogger
 uri = 'radio://0/88/2M/E7E7E7E7EF'
 
 # Only output errors from the logging framework
-logging.basicConfig(level=logging.ERROR)
+logging.basicConfig(level=logging.DEBUG)
 
 if __name__ == '__main__':
     # Initialize the low-level drivers
@@ -23,6 +23,7 @@ if __name__ == '__main__':
     lg_stab.add_variable('actions.action_3', 'float')
 
     with SyncCrazyflie(uri, cf=Crazyflie(rw_cache='./cache')) as scf:
+        print('Connected to %s' % uri)
         with SyncLogger(scf, lg_stab) as logger:
             for log_entry in logger:
 
