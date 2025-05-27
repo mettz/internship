@@ -4,6 +4,7 @@
 
 #include "controller.h"
 #include "log.h"
+#include "usec_time.h"
 
 #include "network/network.h"
 #include "network/network_data.h"
@@ -72,7 +73,7 @@ void controllerOutOfTree(control_t *control, const setpoint_t *setpoint,
     return;
   }
 
-  stai_return_code res;
+  stai_return_code res = STAI_SUCCESS;
 
   memcpy(m_inputs[0], observations, sizeof(observations));
 
@@ -82,12 +83,8 @@ void controllerOutOfTree(control_t *control, const setpoint_t *setpoint,
     DEBUG_PRINT("Error running network: %d\n", res);
   } else {
     memcpy(actions, m_outputs[0], sizeof(actions));
+    for (int i = 0; i < STAI_NETWORK_OUT_1_SIZE; i++) {
+      DEBUG_PRINT("Action %d: %f\n", i, (double)actions[i]);
+    }
   }
 }
-
-LOG_GROUP_START(actions)
-LOG_ADD(LOG_FLOAT, action_0, &actions[0])
-LOG_ADD(LOG_FLOAT, action_1, &actions[1])
-LOG_ADD(LOG_FLOAT, action_2, &actions[2])
-LOG_ADD(LOG_FLOAT, action_3, &actions[3])
-LOG_GROUP_STOP(actions)
