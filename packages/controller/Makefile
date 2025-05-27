@@ -9,3 +9,9 @@ OOT_CONFIG := $(PWD)/config
 EXTRA_CFLAGS += -I../../stedgeai/Inc
 
 include $(CRAZYFLIE_BASE)/tools/make/oot.mk
+
+.PHONY: clean-all
+clean-all:
+	$(MAKE) clean
+	rm -f *.o .*.cmd
+	find src -type f \( -name '*.o' -o -name '.*.cmd' \) -delete

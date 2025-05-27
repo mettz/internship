@@ -77,14 +77,20 @@ void controllerOutOfTree(control_t *control, const setpoint_t *setpoint,
 
   memcpy(m_inputs[0], observations, sizeof(observations));
 
+  uint64_t start = usecTimestamp();
   res = stai_network_run(m_network, STAI_MODE_SYNC);
+  uint64_t end = usecTimestamp();
+
+  if (RATE_DO_EXECUTE(RATE_SUPERVISOR, stabilizerStep)) {
+    DEBUG_PRINT("Network run took %llu us\n", end - start);
+  }
 
   if (res != STAI_SUCCESS) {
     DEBUG_PRINT("Error running network: %d\n", res);
   } else {
     memcpy(actions, m_outputs[0], sizeof(actions));
-    for (int i = 0; i < STAI_NETWORK_OUT_1_SIZE; i++) {
-      DEBUG_PRINT("Action %d: %f\n", i, (double)actions[i]);
-    }
+    // for (int i = 0; i < STAI_NETWORK_OUT_1_SIZE; i++) {
+    //   DEBUG_PRINT("Action %d: %f\n", i, (double)actions[i]);
+    // }
   }
 }
