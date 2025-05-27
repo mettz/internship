@@ -6,7 +6,7 @@ OOT_CONFIG := $(PWD)/config
 # $(error STEDGEAI_CORE_DIR is not set. Please set it to the path of the STEdge AI Core SDK)
 # endif
 
-EXTRA_CFLAGS += -I../../stedgeai/Inc
+EXTRA_CFLAGS += -I../../stedgeai/Inc -Wno-error=double-promotion
 
 include $(CRAZYFLIE_BASE)/tools/make/oot.mk
 
