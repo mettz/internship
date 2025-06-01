@@ -1,6 +1,6 @@
 CRAZYFLIE_BASE := ../../vendor/crazyflie-firmware
 
-OOT_CONFIG := $(PWD)/config
+OOT_CONFIG := $(PWD)/app-config
 
 EXTRA_CFLAGS += -I../../stedgeai/Inc -Wno-error=double-promotion
 

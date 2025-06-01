@@ -1,0 +1,3 @@
+obj-y += network.o network_data.o
+
+ldflags-y += -Wl,--whole-archive ../../stedgeai/Lib/GCC/ARMCortexM4/NetworkRuntime1010_CM4_GCC.a -Wl,--no-whole-archive

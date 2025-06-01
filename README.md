@@ -32,10 +32,3 @@ Where:
 ## Building & Flashing
 
 To build and flash the controller located under `packages/controller` you can follow the standard crazyflie procedure explained [here](https://github.com/bitcraze/crazyflie-firmware/blob/master/docs/building-and-flashing/build.md).
-
-### Important note about the build
-
-To properly build the controller the compiler needs to get find the ST Core AI Core development headers and static library runtime. Those are usually found within the install location of ST Edge AI Core under `Middlewares/ST/AI/Inc` and `Middlewares/ST/AI/Lib`, respectively. During the build process `make` should be able to find these paths and the appropriate files autonomously given that the ST Edge AI Core post installation steps have been followed has reported [here](https://stedgeai-dc.st.com/assets/embedded-docs/setting_env.html) so that the environment variable `STEDGEAI_CORE_DIR` is set and available in the shell. If this is not the case and the build fails due to missing libraries or headers then issued the following command (or the appropiate one for your shell) and retry:
-```bash
-export STEDGEAI_CORE_DIR=/path/to/STEdgeAI/version
-```

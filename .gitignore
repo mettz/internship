@@ -5,6 +5,7 @@ build/
 **/cache
 
 **/*.o
+**/*.o.d
 **/*.cmd
 **/*.a
 *.elf
