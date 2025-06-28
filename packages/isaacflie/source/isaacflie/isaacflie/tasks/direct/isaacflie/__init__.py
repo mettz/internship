@@ -13,7 +13,7 @@ from . import agents
 
 
 gym.register(
-    id="Template-Isaacflie-Direct-v0",
+    id="Isaacflie-Direct-v0",
     entry_point=f"{__name__}.isaacflie_env:IsaacflieEnv",
     disable_env_checker=True,
     kwargs={

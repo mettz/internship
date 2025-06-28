@@ -1,19 +1,14 @@
-# Copyright (c) 2022-2025, The Isaac Lab Project Developers (https://github.com/isaac-sim/IsaacLab/blob/main/CONTRIBUTORS.md).
-# All rights reserved.
-#
-# SPDX-License-Identifier: BSD-3-Clause
-
 from __future__ import annotations
 
-import math
+import gymnasium as gym
 import torch
-from collections.abc import Sequence
 
 import isaaclab.sim as sim_utils
 from isaaclab.assets import Articulation
 from isaaclab.envs import DirectRLEnv
-from isaaclab.sim.spawners.from_files import GroundPlaneCfg, spawn_ground_plane
-from isaaclab.utils.math import sample_uniform
+from isaaclab.markers import VisualizationMarkers
+from isaaclab.utils.math import matrix_from_quat
+from isaaclab.markers import CUBOID_MARKER_CFG
 
 from .isaacflie_env_cfg import IsaacflieEnvCfg
 
@@ -24,112 +19,222 @@ class IsaacflieEnv(DirectRLEnv):
     def __init__(self, cfg: IsaacflieEnvCfg, render_mode: str | None = None, **kwargs):
         super().__init__(cfg, render_mode, **kwargs)
 
-        self._cart_dof_idx, _ = self.robot.find_joints(self.cfg.cart_dof_name)
-        self._pole_dof_idx, _ = self.robot.find_joints(self.cfg.pole_dof_name)
+        self._rotor_positions = torch.tensor(
+            self.cfg.rotor_positions, device=self.device
+        )
+        self._rotor_thrust_directions = torch.tensor(
+            self.cfg.rotor_thrust_directions, device=self.device
+        )
+        self._rotor_torque_directions = torch.tensor(
+            self.cfg.rotor_torque_directions, device=self.device
+        )
 
-        self.joint_pos = self.robot.data.joint_pos
-        self.joint_vel = self.robot.data.joint_vel
+        self._actions = torch.zeros(
+            self.num_envs,
+            gym.spaces.flatdim(self.single_action_space),
+            device=self.device,
+        )
+        self._action_history = torch.zeros(
+            (self.num_envs, 32, self._actions.shape[1]),
+            device=self.device,
+        )
+        self._thrust = torch.zeros(self.num_envs, 1, 3, device=self.device)
+        self._torque = torch.zeros(self.num_envs, 1, 3, device=self.device)
+        self._prev_lin_vel = torch.zeros_like(self._robot.data.root_lin_vel_b)
+        self._prev_ang_vel = torch.zeros_like(self._robot.data.root_ang_vel_b)
+
+        # Get specific body indices
+        self._body_id = self._robot.find_bodies("body")[0]
+
+        # add handle for debug visualization (this is set to a valid handle inside set_debug_vis)
+        self.set_debug_vis(self.cfg.debug_vis)
+
+        with self._window.ui_window_elements["main_vstack"]:
+            with self._window.ui_window_elements["debug_frame"]:
+                with self._window.ui_window_elements["debug_vstack"]:
+                    # add command manager visualization
+                    self._window._create_debug_vis_ui_element("targets", self)
 
     def _setup_scene(self):
-        self.robot = Articulation(self.cfg.robot_cfg)
-        # add ground plane
-        spawn_ground_plane(prim_path="/World/ground", cfg=GroundPlaneCfg())
+        self._robot = Articulation(self.cfg.robot)
+        self.scene.articulations["robot"] = self._robot
+
+        # setup ground plane
+        self.cfg.terrain.num_envs = self.scene.cfg.num_envs
+        self.cfg.terrain.env_spacing = self.scene.cfg.env_spacing
+        self._terrain = self.cfg.terrain.class_type(self.cfg.terrain)
+
         # clone and replicate
         self.scene.clone_environments(copy_from_source=False)
+
         # we need to explicitly filter collisions for CPU simulation
         if self.device == "cpu":
-            self.scene.filter_collisions(global_prim_paths=[])
-        # add articulation to scene
-        self.scene.articulations["robot"] = self.robot
+            self.scene.filter_collisions(global_prim_paths=[self.cfg.terrain.prim_path])
+
         # add lights
         light_cfg = sim_utils.DomeLightCfg(intensity=2000.0, color=(0.75, 0.75, 0.75))
         light_cfg.func("/World/Light", light_cfg)
 
-    def _pre_physics_step(self, actions: torch.Tensor) -> None:
-        self.actions = actions.clone()
+    def _pre_physics_step(self, actions: torch.Tensor):
+        # save current velocities for reward computation later
+        self._prev_lin_vel = self._robot.data.root_lin_vel_b.clone()
+        self._prev_ang_vel = self._robot.data.root_ang_vel_b.clone()
 
-    def _apply_action(self) -> None:
-        self.robot.set_joint_effort_target(self.actions * self.cfg.action_scale, joint_ids=self._cart_dof_idx)
+        self._actions = actions.clone()
+        self._action_history = torch.roll(self._action_history, shifts=-1, dims=1)
+        self._action_history[:, -1, :] = self._actions
+
+        half_range = 0.5 * (
+            self.cfg.action_limits["max"] - self.cfg.action_limits["min"]
+        )
+        mean_rpm = half_range + self.cfg.action_limits["min"]
+
+        if self.cfg.action_noise > 0.0:
+            noise = torch.randn_like(self._actions) * self.cfg.action_noise
+            self._actions += noise
+
+        self._actions = self._actions.clamp(-1.0, 1.0)
+        rpms = self._actions * half_range + mean_rpm  # shape: (B, 4)
+
+        a, b, c = self.cfg.thrust_constants
+        thrust_mag = a + b * rpms + c * rpms**2  # (B, 4)
+
+        rotor_thrusts = (
+            thrust_mag.unsqueeze(-1) * self._rotor_thrust_directions
+        )  # (B, 4, 3)
+
+        self._thrust[:, 0, :] = rotor_thrusts.sum(dim=1)
+
+        drag_torques = (
+            thrust_mag.unsqueeze(-1)
+            * self.cfg.torque_constant
+            * self._rotor_torque_directions
+        )
+
+        moment_arms = torch.cross(
+            self._rotor_positions.unsqueeze(0), rotor_thrusts, dim=-1
+        )  # (B, 4, 3)
+
+        self._torque[:, 0, :] = drag_torques.sum(dim=1) + moment_arms.sum(dim=1)
+
+    def _apply_action(self):
+        self._robot.set_external_force_and_torque(
+            self._thrust, self._torque, body_ids=self._body_id
+        )
 
     def _get_observations(self) -> dict:
-        obs = torch.cat(
-            (
-                self.joint_pos[:, self._pole_dof_idx[0]].unsqueeze(dim=1),
-                self.joint_vel[:, self._pole_dof_idx[0]].unsqueeze(dim=1),
-                self.joint_pos[:, self._cart_dof_idx[0]].unsqueeze(dim=1),
-                self.joint_vel[:, self._cart_dof_idx[0]].unsqueeze(dim=1),
-            ),
+        rot_mat = matrix_from_quat(self._robot.data.root_quat_w)
+        rot_mat_flat = rot_mat.view(self.num_envs, 9)
+
+        policy_obs = torch.cat(
+            [
+                self._robot.data.root_pos_w,
+                rot_mat_flat,
+                self._robot.data.root_lin_vel_b,
+                self._robot.data.root_ang_vel_b,
+                self._action_history.view(self.num_envs, -1),
+            ],
             dim=-1,
         )
-        observations = {"policy": obs}
+
+        observations = {"policy": policy_obs}
         return observations
 
     def _get_rewards(self) -> torch.Tensor:
-        total_reward = compute_rewards(
-            self.cfg.rew_scale_alive,
-            self.cfg.rew_scale_terminated,
-            self.cfg.rew_scale_pole_pos,
-            self.cfg.rew_scale_cart_vel,
-            self.cfg.rew_scale_pole_vel,
-            self.joint_pos[:, self._pole_dof_idx[0]],
-            self.joint_vel[:, self._pole_dof_idx[0]],
-            self.joint_pos[:, self._cart_dof_idx[0]],
-            self.joint_vel[:, self._cart_dof_idx[0]],
-            self.reset_terminated,
+        pos = self._robot.data.root_pos_w
+        quat = self._robot.data.root_quat_w
+        lin_vel = self._robot.data.root_lin_vel_b
+        ang_vel = self._robot.data.root_ang_vel_b
+
+        lin_acc = (lin_vel - self._prev_lin_vel) / self.step_dt
+        ang_acc = (ang_vel - self._prev_ang_vel) / self.step_dt
+
+        action_diff = self._actions - self.cfg.reward_params["action_baseline"]
+
+        rp = self.cfg.reward_params
+
+        pos_sq = torch.square(pos).sum(dim=-1)
+        orient_cost = 1.0 - torch.square(quat[..., 0])
+        lin_vel_sq = torch.square(lin_vel).sum(dim=-1)
+        ang_vel_sq = torch.square(ang_vel).sum(dim=-1)
+        lin_acc_sq = torch.square(lin_acc).sum(dim=-1)
+        ang_acc_sq = torch.square(ang_acc).sum(dim=-1)
+        action_diff_sq = torch.square(action_diff).sum(dim=-1)
+
+        weighted_cost = (
+            rp["position"] * pos_sq
+            + rp["orientation"] * orient_cost
+            + rp["linear_velocity"] * lin_vel_sq
+            + rp["angular_velocity"] * ang_vel_sq
+            + rp["linear_acceleration"] * lin_acc_sq
+            + rp["angular_acceleration"] * ang_acc_sq
+            + rp["action"] * action_diff_sq
         )
-        return total_reward
+
+        scaled_cost = rp["scale"] * weighted_cost
+        reward = -scaled_cost + rp["constant"]
+        if rp["non_negative"]:
+            reward = torch.clamp_min(reward, 0.0)
+
+        reward = torch.where(self.reset_terminated, rp["termination_penalty"], reward)
+        return reward
 
     def _get_dones(self) -> tuple[torch.Tensor, torch.Tensor]:
-        self.joint_pos = self.robot.data.joint_pos
-        self.joint_vel = self.robot.data.joint_vel
-
         time_out = self.episode_length_buf >= self.max_episode_length - 1
-        out_of_bounds = torch.any(torch.abs(self.joint_pos[:, self._cart_dof_idx]) > self.cfg.max_cart_pos, dim=1)
-        out_of_bounds = out_of_bounds | torch.any(torch.abs(self.joint_pos[:, self._pole_dof_idx]) > math.pi / 2, dim=1)
-        return out_of_bounds, time_out
+        pos_thresh = self.cfg.termination_params["position_threshold"]
+        lin_vel_thresh = self.cfg.termination_params["linear_velocity_threshold"]
+        ang_vel_thresh = self.cfg.termination_params["angular_velocity_threshold"]
 
-    def _reset_idx(self, env_ids: Sequence[int] | None):
-        if env_ids is None:
-            env_ids = self.robot._ALL_INDICES
+        pos_exceeded = (torch.abs(self._robot.data.root_pos_w) > pos_thresh).any(dim=-1)
+        lin_vel_exceeded = (
+            torch.abs(self._robot.data.root_lin_vel_b) > lin_vel_thresh
+        ).any(dim=-1)
+        ang_vel_exceeded = (
+            torch.abs(self._robot.data.root_ang_vel_b) > ang_vel_thresh
+        ).any(dim=-1)
+
+        died = pos_exceeded | lin_vel_exceeded | ang_vel_exceeded
+        return died, time_out
+
+    def _reset_idx(self, env_ids: torch.Tensor | None):
+        if env_ids is None or len(env_ids) == self.num_envs:
+            env_ids = self._robot._ALL_INDICES
+
+        self._robot.reset(env_ids)
         super()._reset_idx(env_ids)
+        if len(env_ids) == self.num_envs:
+            # Spread out the resets to avoid spikes in training when many environments reset at a similar time
+            self.episode_length_buf = torch.randint_like(
+                self.episode_length_buf, high=int(self.max_episode_length)
+            )
 
-        joint_pos = self.robot.data.default_joint_pos[env_ids]
-        joint_pos[:, self._pole_dof_idx] += sample_uniform(
-            self.cfg.initial_pole_angle_range[0] * math.pi,
-            self.cfg.initial_pole_angle_range[1] * math.pi,
-            joint_pos[:, self._pole_dof_idx].shape,
-            joint_pos.device,
+        self._actions[env_ids] = 0.0
+        # Reset robot state
+        joint_pos = self._robot.data.default_joint_pos[env_ids]
+        joint_vel = self._robot.data.default_joint_vel[env_ids]
+        default_root_state = self._robot.data.default_root_state[env_ids]
+        default_root_state[:, :3] += self._terrain.env_origins[env_ids]
+        self._robot.write_root_pose_to_sim(default_root_state[:, :7], env_ids)
+        self._robot.write_root_velocity_to_sim(default_root_state[:, 7:], env_ids)
+        self._robot.write_joint_state_to_sim(joint_pos, joint_vel, None, env_ids)
+
+    def _set_debug_vis_impl(self, debug_vis: bool):
+        # create markers if necessary for the first tome
+        if debug_vis:
+            if not hasattr(self, "goal_pos_visualizer"):
+                marker_cfg = CUBOID_MARKER_CFG.copy()
+                marker_cfg.markers["cuboid"].size = (0.05, 0.05, 0.05)
+                # -- goal pose
+                marker_cfg.prim_path = "/Visuals/Command/goal_position"
+                self.goal_pos_visualizer = VisualizationMarkers(marker_cfg)
+            # set their visibility to true
+            self.goal_pos_visualizer.set_visibility(True)
+        else:
+            if hasattr(self, "goal_pos_visualizer"):
+                self.goal_pos_visualizer.set_visibility(False)
+
+    def _debug_vis_callback(self, event):
+        # update the markers
+        self.goal_pos_visualizer.visualize(
+            torch.zeros(self.num_envs, 3, device=self.device)
         )
-        joint_vel = self.robot.data.default_joint_vel[env_ids]
-
-        default_root_state = self.robot.data.default_root_state[env_ids]
-        default_root_state[:, :3] += self.scene.env_origins[env_ids]
-
-        self.joint_pos[env_ids] = joint_pos
-        self.joint_vel[env_ids] = joint_vel
-
-        self.robot.write_root_pose_to_sim(default_root_state[:, :7], env_ids)
-        self.robot.write_root_velocity_to_sim(default_root_state[:, 7:], env_ids)
-        self.robot.write_joint_state_to_sim(joint_pos, joint_vel, None, env_ids)
-
-
-@torch.jit.script
-def compute_rewards(
-    rew_scale_alive: float,
-    rew_scale_terminated: float,
-    rew_scale_pole_pos: float,
-    rew_scale_cart_vel: float,
-    rew_scale_pole_vel: float,
-    pole_pos: torch.Tensor,
-    pole_vel: torch.Tensor,
-    cart_pos: torch.Tensor,
-    cart_vel: torch.Tensor,
-    reset_terminated: torch.Tensor,
-):
-    rew_alive = rew_scale_alive * (1.0 - reset_terminated.float())
-    rew_termination = rew_scale_terminated * reset_terminated.float()
-    rew_pole_pos = rew_scale_pole_pos * torch.sum(torch.square(pole_pos).unsqueeze(dim=1), dim=-1)
-    rew_cart_vel = rew_scale_cart_vel * torch.sum(torch.abs(cart_vel).unsqueeze(dim=1), dim=-1)
-    rew_pole_vel = rew_scale_pole_vel * torch.sum(torch.abs(pole_vel).unsqueeze(dim=1), dim=-1)
-    total_reward = rew_alive + rew_termination + rew_pole_pos + rew_cart_vel + rew_pole_vel
-    return total_reward

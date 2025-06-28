@@ -1,48 +1,112 @@
-# Copyright (c) 2022-2025, The Isaac Lab Project Developers (https://github.com/isaac-sim/IsaacLab/blob/main/CONTRIBUTORS.md).
-# All rights reserved.
-#
-# SPDX-License-Identifier: BSD-3-Clause
+from isaaclab_assets.robots import CRAZYFLIE_CFG
 
-from isaaclab_assets.robots.cartpole import CARTPOLE_CFG
-
+import isaaclab.sim as sim_utils
 from isaaclab.assets import ArticulationCfg
 from isaaclab.envs import DirectRLEnvCfg
 from isaaclab.scene import InteractiveSceneCfg
 from isaaclab.sim import SimulationCfg
 from isaaclab.utils import configclass
+from isaaclab.terrains import TerrainImporterCfg
 
 
 @configclass
 class IsaacflieEnvCfg(DirectRLEnvCfg):
     # env
+    episode_length_s = 10.0
     decimation = 2
-    episode_length_s = 5.0
-    # - spaces definition
-    action_space = 1
-    observation_space = 4
+    action_space = 4
+    observation_space = 18 + 4 * 32
     state_space = 0
+    debug_vis = True
 
     # simulation
-    sim: SimulationCfg = SimulationCfg(dt=1 / 120, render_interval=decimation)
-
-    # robot(s)
-    robot_cfg: ArticulationCfg = CARTPOLE_CFG.replace(prim_path="/World/envs/env_.*/Robot")
+    sim: SimulationCfg = SimulationCfg(
+        dt=1 / 100,
+        render_interval=decimation,
+        physics_material=sim_utils.RigidBodyMaterialCfg(
+            friction_combine_mode="multiply",
+            restitution_combine_mode="multiply",
+            static_friction=1.0,
+            dynamic_friction=1.0,
+            restitution=0.0,
+        ),
+    )
+    terrain = TerrainImporterCfg(
+        prim_path="/World/ground",
+        terrain_type="plane",
+        collision_group=-1,
+        physics_material=sim_utils.RigidBodyMaterialCfg(
+            friction_combine_mode="multiply",
+            restitution_combine_mode="multiply",
+            static_friction=1.0,
+            dynamic_friction=1.0,
+            restitution=0.0,
+        ),
+        debug_vis=False,
+    )
 
     # scene
-    scene: InteractiveSceneCfg = InteractiveSceneCfg(num_envs=4096, env_spacing=4.0, replicate_physics=True)
+    scene: InteractiveSceneCfg = InteractiveSceneCfg(
+        num_envs=4096, env_spacing=2.5, replicate_physics=True
+    )
 
-    # custom parameters/scales
-    # - controllable joint
-    cart_dof_name = "slider_to_cart"
-    pole_dof_name = "cart_to_pole"
-    # - action scale
-    action_scale = 100.0  # [N]
-    # - reward scales
-    rew_scale_alive = 1.0
-    rew_scale_terminated = -2.0
-    rew_scale_pole_pos = -1.0
-    rew_scale_cart_vel = -0.01
-    rew_scale_pole_vel = -0.005
-    # - reset states/conditions
-    initial_pole_angle_range = [-0.25, 0.25]  # pole angle sample range on reset [rad]
-    max_cart_pos = 3.0  # reset if cart exceeds this position [m]
+    # robot
+    robot: ArticulationCfg = CRAZYFLIE_CFG.replace(prim_path="/World/envs/env_.*/Robot")
+
+    # robot parameters
+    arm_length = 0.028
+    rotor_positions = [
+        [arm_length, -arm_length, 0.0],
+        [-arm_length, -arm_length, 0.0],
+        [-arm_length, arm_length, 0.0],
+        [arm_length, arm_length, 0.0],
+    ]
+    rotor_thrust_directions = [
+        [0.0, 0.0, 1.0],
+        [0.0, 0.0, 1.0],
+        [0.0, 0.0, 1.0],
+        [0.0, 0.0, 1.0],
+    ]
+    rotor_torque_directions = [
+        [0.0, 0.0, -1.0],
+        [0.0, 0.0, +1.0],
+        [0.0, 0.0, -1.0],
+        [0.0, 0.0, +1.0],
+    ]
+    thrust_constants = [0.0, 0.0, 3.16e-10]
+    torque_constant = 0.005964552
+    rpm_time_constant = 0.15
+    action_limits = {
+        "min": 0.0,
+        "max": 21702.0,
+    }
+
+    # mdp parameters
+    action_noise = 0.0
+    observation_noise = {
+        "position": 0.001,
+        "velocity": 0.001,
+        "linear_velocity": 0.002,
+        "angular_velocity": 0.002,
+    }
+
+    reward_params = {
+        "non_negative": False,
+        "action_baseline": 0.334,
+        "scale": 0.5,
+        "constant": 2,
+        "termination_penalty": 0,
+        "position": 5,
+        "orientation": 5,
+        "linear_velocity": 0.01,
+        "angular_velocity": 0,
+        "linear_acceleration": 0,
+        "angular_acceleration": 0,
+        "action": 0.01,
+    }
+
+    termination_params = {
+        "position_threshold": 0.6,
+        "linear_velocity_threshold": 1000,
+        "angular_velocity_threshold": 1000,
+    }
