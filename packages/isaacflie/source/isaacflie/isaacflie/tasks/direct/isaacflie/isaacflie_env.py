@@ -7,7 +7,7 @@ import isaaclab.sim as sim_utils
 from isaaclab.assets import Articulation
 from isaaclab.envs import DirectRLEnv
 from isaaclab.markers import VisualizationMarkers
-from isaaclab.utils.math import matrix_from_quat
+from isaaclab.utils.math import matrix_from_quat, subtract_frame_transforms
 from isaaclab.markers import CUBOID_MARKER_CFG
 
 from .isaacflie_env_cfg import IsaacflieEnvCfg
@@ -123,12 +123,13 @@ class IsaacflieEnv(DirectRLEnv):
         )
 
     def _get_observations(self) -> dict:
+        pos_b = self._robot.data.root_pos_w - self._terrain.env_origins
         rot_mat = matrix_from_quat(self._robot.data.root_quat_w)
         rot_mat_flat = rot_mat.view(self.num_envs, 9)
 
         policy_obs = torch.cat(
             [
-                self._robot.data.root_pos_w,
+                pos_b,
                 rot_mat_flat,
                 self._robot.data.root_lin_vel_b,
                 self._robot.data.root_ang_vel_b,
@@ -141,7 +142,7 @@ class IsaacflieEnv(DirectRLEnv):
         return observations
 
     def _get_rewards(self) -> torch.Tensor:
-        pos = self._robot.data.root_pos_w
+        pos = self._robot.data.root_pos_w - self._terrain.env_origins
         quat = self._robot.data.root_quat_w
         lin_vel = self._robot.data.root_lin_vel_b
         ang_vel = self._robot.data.root_ang_vel_b
@@ -185,7 +186,12 @@ class IsaacflieEnv(DirectRLEnv):
         lin_vel_thresh = self.cfg.termination_params["linear_velocity_threshold"]
         ang_vel_thresh = self.cfg.termination_params["angular_velocity_threshold"]
 
-        pos_exceeded = (torch.abs(self._robot.data.root_pos_w) > pos_thresh).any(dim=-1)
+        pos_b = self._robot.data.root_pos_w - self._terrain.env_origins
+
+        too_low = torch.abs(pos_b[:, 2]) < 0.1  # (num_envs,)
+        too_far = torch.any(torch.abs(pos_b) > pos_thresh, dim=-1)  # (num_envs,)
+        pos_exceeded = torch.logical_or(too_low, too_far)  # (num_envs,)
+
         lin_vel_exceeded = (
             torch.abs(self._robot.data.root_lin_vel_b) > lin_vel_thresh
         ).any(dim=-1)
@@ -194,6 +200,7 @@ class IsaacflieEnv(DirectRLEnv):
         ).any(dim=-1)
 
         died = pos_exceeded | lin_vel_exceeded | ang_vel_exceeded
+
         return died, time_out
 
     def _reset_idx(self, env_ids: torch.Tensor | None):
