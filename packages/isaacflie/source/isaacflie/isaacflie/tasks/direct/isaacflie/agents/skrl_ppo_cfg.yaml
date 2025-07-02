@@ -13,19 +13,19 @@ models:
     max_log_std: 2.0
     initial_log_std: 0.0
     network:
-      - name: net
+      - name: actor
         input: STATES
         layers: [64, 64]
-        activations: elu
+        activations: tanh
     output: ACTIONS
   value:  # see deterministic_model parameters
     class: DeterministicMixin
     clip_actions: False
     network:
-      - name: net
+      - name: critic
         input: STATES
         layers: [64, 64]
-        activations: elu
+        activations: tanh
     output: ONE
 
 

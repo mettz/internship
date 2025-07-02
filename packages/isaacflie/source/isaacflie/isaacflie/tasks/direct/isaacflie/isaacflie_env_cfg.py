@@ -16,7 +16,7 @@ class IsaacflieEnvCfg(DirectRLEnvCfg):
     decimation = 2
     action_space = 4
     observation_space = 18 + 4 * 32
-    state_space = 0
+    state_space = 18 + 4
     debug_vis = True
 
     # simulation

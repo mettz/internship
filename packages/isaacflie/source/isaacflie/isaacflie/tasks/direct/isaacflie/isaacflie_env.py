@@ -7,7 +7,7 @@ import isaaclab.sim as sim_utils
 from isaaclab.assets import Articulation
 from isaaclab.envs import DirectRLEnv
 from isaaclab.markers import VisualizationMarkers
-from isaaclab.utils.math import matrix_from_quat, subtract_frame_transforms
+from isaaclab.utils.math import matrix_from_quat
 from isaaclab.markers import CUBOID_MARKER_CFG
 
 from .isaacflie_env_cfg import IsaacflieEnvCfg
@@ -42,6 +42,7 @@ class IsaacflieEnv(DirectRLEnv):
         self._torque = torch.zeros(self.num_envs, 1, 3, device=self.device)
         self._prev_lin_vel = torch.zeros_like(self._robot.data.root_lin_vel_b)
         self._prev_ang_vel = torch.zeros_like(self._robot.data.root_ang_vel_b)
+        self._rpm = torch.zeros_like(self._actions)
 
         # Get specific body indices
         self._body_id = self._robot.find_bodies("body")[0]
@@ -75,27 +76,28 @@ class IsaacflieEnv(DirectRLEnv):
         light_cfg = sim_utils.DomeLightCfg(intensity=2000.0, color=(0.75, 0.75, 0.75))
         light_cfg.func("/World/Light", light_cfg)
 
-    def _pre_physics_step(self, actions: torch.Tensor):
-        # save current velocities for reward computation later
-        self._prev_lin_vel = self._robot.data.root_lin_vel_b.clone()
-        self._prev_ang_vel = self._robot.data.root_ang_vel_b.clone()
+    def _update_rpms(self, actions: torch.Tensor):
+        # Assuming current RPMs are self._rpm, and `action` represents the desired RPM changes
+        k1 = self._rpm.clone()
+        # Compute the change in RPMs based on the action (adjustment), using time constant
+        k1 = (actions - self._rpm) / self.cfg.rpm_time_constant
 
-        self._actions = actions.clone()
-        self._action_history = torch.roll(self._action_history, shifts=-1, dims=1)
-        self._action_history[:, -1, :] = self._actions
+        # Calculate the second step (k2) with a similar method, using k1 as the intermediate adjustment
+        k2 = self._rpm + (self.step_dt / 2) * k1
+        k2 = (actions - k2) / self.cfg.rpm_time_constant
 
-        half_range = 0.5 * (
-            self.cfg.action_limits["max"] - self.cfg.action_limits["min"]
-        )
-        mean_rpm = half_range + self.cfg.action_limits["min"]
+        # Third step (k3), use k2 for adjustments
+        k3 = self._rpm + (self.step_dt / 2) * k2
+        k3 = (actions - k3) / self.cfg.rpm_time_constant
 
-        if self.cfg.action_noise > 0.0:
-            noise = torch.randn_like(self._actions) * self.cfg.action_noise
-            self._actions += noise
+        # Fourth step (k4), full step using k3
+        k4 = self._rpm + self.step_dt * k3
+        k4 = (actions - k4) / self.cfg.rpm_time_constant
 
-        self._actions = self._actions.clamp(-1.0, 1.0)
-        rpms = self._actions * half_range + mean_rpm  # shape: (B, 4)
+        # Final update of RPMs, weighted average of k1, k2, k3, k4
+        self._rpm += (self.step_dt / 6) * (k1 + 2 * k2 + 2 * k3 + k4)
 
+    def _update_thrust_and_torque(self, rpms: torch.Tensor):
         a, b, c = self.cfg.thrust_constants
         thrust_mag = a + b * rpms + c * rpms**2  # (B, 4)
 
@@ -117,28 +119,71 @@ class IsaacflieEnv(DirectRLEnv):
 
         self._torque[:, 0, :] = drag_torques.sum(dim=1) + moment_arms.sum(dim=1)
 
+    def _pre_physics_step(self, actions: torch.Tensor):
+        # save current velocities for reward computation later
+        self._prev_lin_vel = self._robot.data.root_lin_vel_b.clone()
+        self._prev_ang_vel = self._robot.data.root_ang_vel_b.clone()
+
+        self._actions = actions.clone()
+        self._action_history = torch.roll(self._action_history, shifts=-1, dims=1)
+        self._action_history[:, -1, :] = self._actions
+
+        half_range = 0.5 * (
+            self.cfg.action_limits["max"] - self.cfg.action_limits["min"]
+        )
+        mean_rpm = half_range + self.cfg.action_limits["min"]
+
+        if self.cfg.action_noise > 0.0:
+            noise = torch.randn_like(self._actions) * self.cfg.action_noise
+            self._actions += noise
+
+        self._actions = self._actions.clamp(-1.0, 1.0)
+        scaled_actions = self._actions * half_range + mean_rpm  # shape: (B, 4)
+
+        self._update_thrust_and_torque(scaled_actions)
+        self._update_rpms(scaled_actions)
+
     def _apply_action(self):
         self._robot.set_external_force_and_torque(
             self._thrust, self._torque, body_ids=self._body_id
         )
 
     def _get_observations(self) -> dict:
-        pos_b = self._robot.data.root_pos_w - self._terrain.env_origins
+        position = self._robot.data.root_pos_w - self._terrain.env_origins
         rot_mat = matrix_from_quat(self._robot.data.root_quat_w)
         rot_mat_flat = rot_mat.view(self.num_envs, 9)
 
-        policy_obs = torch.cat(
+        common_obs = torch.cat(
             [
-                pos_b,
+                position,
                 rot_mat_flat,
                 self._robot.data.root_lin_vel_b,
                 self._robot.data.root_ang_vel_b,
+            ],
+            dim=-1,
+        )
+
+        actor_obs = torch.cat(
+            [
+                common_obs,
                 self._action_history.view(self.num_envs, -1),
             ],
             dim=-1,
         )
 
-        observations = {"policy": policy_obs}
+        rpms = (self._rpm - self.cfg.action_limits["min"]) / (
+            self.cfg.action_limits["max"] - self.cfg.action_limits["min"]
+        ) * 2.0 - 1.0
+
+        critic_obs = torch.cat(
+            [
+                common_obs,
+                rpms,
+            ],
+            dim=-1,
+        )
+
+        observations = {"policy": actor_obs, "critic": critic_obs}
         return observations
 
     def _get_rewards(self) -> torch.Tensor:
@@ -186,10 +231,10 @@ class IsaacflieEnv(DirectRLEnv):
         lin_vel_thresh = self.cfg.termination_params["linear_velocity_threshold"]
         ang_vel_thresh = self.cfg.termination_params["angular_velocity_threshold"]
 
-        pos_b = self._robot.data.root_pos_w - self._terrain.env_origins
+        position = self._robot.data.root_pos_w - self._terrain.env_origins
 
-        too_low = torch.abs(pos_b[:, 2]) < 0.1  # (num_envs,)
-        too_far = torch.any(torch.abs(pos_b) > pos_thresh, dim=-1)  # (num_envs,)
+        too_low = torch.abs(position[:, 2]) < 0.1  # (num_envs,)
+        too_far = torch.any(torch.abs(position) > pos_thresh, dim=-1)  # (num_envs,)
         pos_exceeded = torch.logical_or(too_low, too_far)  # (num_envs,)
 
         lin_vel_exceeded = (
