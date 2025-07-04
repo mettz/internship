@@ -1,33 +1,33 @@
 ST Edge AI Core v2.1.0-20194 329b0e98d
-Created date          : 2025-07-04 12:31:10
-Parameters            : generate -m .\policies\rsl_rl.onnx -o prova --target stm32f5 --c-api st-ai
+Created date          : 2025-07-04 22:41:20
+Parameters            : generate -m .\isaacflie.onnx -o .\networks\isaacflie --target stm32f4 --c-api st-ai
 
 Exec/report summary (generate)
-----------------------------------------------------------------------------------------
-model file         :   C:\Users\mettz\uni\thesis\internship\policies\rsl_rl.onnx        
-type               :   onnx                                                             
-c_name             :   network                                                          
-compression        :   lossless                                                         
-options            :   allocate-inputs, allocate-outputs, use-lite-runtime, use-st-ai   
-optimization       :   balanced                                                         
-target/series      :   stm32f5                                                          
-workspace dir      :   C:\Users\mettz\uni\thesis\internship\st_ai_ws                    
-output dir         :   C:\Users\mettz\uni\thesis\internship\prova                       
-model_fmt          :   float                                                            
-model_name         :   rsl_rl                                                           
-model_hash         :   0x3a91ed5f28f4c9c0c631c9b9a6eaf135                               
-params #           :   13,828 items (54.02 KiB)                                         
-----------------------------------------------------------------------------------------
-input 1/1          :   'obs', f32(1x146), 584 Bytes, activations                        
-output 1/1         :   'actions', f32(1x4), 16 Bytes, activations                       
-macc               :   15,108                                                           
-weights (ro)       :   55,312 B (54.02 KiB) (1 segment)                                 
-activations (rw)   :   840 B (840 B) (1 segment) *                                      
-ram (total)        :   840 B (840 B) = 840 + 0 + 0                                      
-----------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------
+model file         :   C:\Users\mettz\uni\thesis\internship\policies\isaacflie.onnx       
+type               :   onnx                                                               
+c_name             :   network                                                            
+compression        :   lossless                                                           
+options            :   allocate-inputs, allocate-outputs, use-lite-runtime, use-st-ai     
+optimization       :   balanced                                                           
+target/series      :   stm32f4                                                            
+workspace dir      :   C:\Users\mettz\uni\thesis\internship\policies\st_ai_ws             
+output dir         :   C:\Users\mettz\uni\thesis\internship\policies\networks\isaacflie   
+model_fmt          :   float                                                              
+model_name         :   isaacflie                                                          
+model_hash         :   0x3512f44baa352d7d8ce6c95f6a14b1eb                                 
+params #           :   13,828 items (54.02 KiB)                                           
+------------------------------------------------------------------------------------------
+input 1/1          :   'obs', f32(1x146), 584 Bytes, activations                          
+output 1/1         :   'actions', f32(1x4), 16 Bytes, activations                         
+macc               :   15,108                                                             
+weights (ro)       :   55,312 B (54.02 KiB) (1 segment)                                   
+activations (rw)   :   840 B (840 B) (1 segment) *                                        
+ram (total)        :   840 B (840 B) = 840 + 0 + 0                                        
+------------------------------------------------------------------------------------------
 (*) 'input'/'output' buffers can be used from the activations buffer
 
-Model name - rsl_rl
+Model name - isaacflie
 ------ ----------------------------------------------------- -------------- -------------- ------- -------------------------------- --- --------------- ----------------- ------------------ 
 m_id   layer (type,original)                                 oshape         param/size        macc                     connected to   | c_size          c_macc            c_type             
 ------ ----------------------------------------------------- -------------- -------------- ------- -------------------------------- --- --------------- ----------------- ------------------ 
@@ -64,7 +64,7 @@ model/c-model: macc=15,108/15,108  weights=55,312/55,312  activations=--/840 io=
 
 Generated C-graph summary
 ------------------------------------------------------------------------------------------------------------------------
-model name            : rsl_rl
+model name            : isaacflie
 c-name                : network
 c-node #              : 5
 c-array #             : 12
@@ -152,9 +152,9 @@ m_id   name                             c_macc                    c_rom         
 macc=15,108 weights=55,312 act=840 ram_io=0
 
 Generated files (5)
--------------------------------------------------------------- 
-C:\Users\mettz\uni\thesis\internship\prova\network_data.h      
-C:\Users\mettz\uni\thesis\internship\prova\network_data.c      
-C:\Users\mettz\uni\thesis\internship\prova\network.h           
-C:\Users\mettz\uni\thesis\internship\prova\network.c           
-C:\Users\mettz\uni\thesis\internship\prova\network_details.h   
+------------------------------------------------------------------------------------ 
+C:\Users\mettz\uni\thesis\internship\policies\networks\isaacflie\network_data.h      
+C:\Users\mettz\uni\thesis\internship\policies\networks\isaacflie\network_data.c      
+C:\Users\mettz\uni\thesis\internship\policies\networks\isaacflie\network.h           
+C:\Users\mettz\uni\thesis\internship\policies\networks\isaacflie\network.c           
+C:\Users\mettz\uni\thesis\internship\policies\networks\isaacflie\network_details.h   

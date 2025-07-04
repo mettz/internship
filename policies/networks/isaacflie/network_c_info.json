@@ -333,46 +333,46 @@
   ],
   "environment": {
     "generated_model": {
-      "generated_time": "2025-07-04T12:31:10+0200",
+      "generated_time": "2025-07-04T22:41:20+0200",
       "model_files": [
         {
           "name": "network_data.h",
-          "signature": "0xf59ab38b29a417719c16a3d98e663e82"
+          "signature": "0x8f632e6c1c5dabdd6556a3c6b44a9f05"
         },
         {
           "name": "network_data.c",
-          "signature": "0xeedbc0acac94555c91790213f54f55c4"
+          "signature": "0x349938e408a5d023ee99ef1302622843"
         },
         {
           "name": "network.h",
-          "signature": "0x7aebfa55df22499cf4532447b5e89ccb"
+          "signature": "0x76c439534e9a60c60ffbffac931016b2"
         },
         {
           "name": "network.c",
-          "signature": "0x879a2bf230b1e7abc5fc3ce3ab38b079"
+          "signature": "0x420c9411bc8e7370959735e7e9dddceb"
         },
         {
           "name": "network_details.h",
-          "signature": "0x4734494834cd3703842db4483858a19a"
+          "signature": "0xe3d9edb7ea9e95526fba9472d499507c"
         }
       ],
       "name": "network"
     },
-    "network_signature": "0x60dc06a66ddea46e",
+    "network_signature": "0xe85f1286bbd3143c",
     "test_name": "",
     "tools": [
       {
-        "arguments": "generate -m .\\policies\\rsl_rl.onnx -o prova --target stm32f5 --c-api st-ai",
+        "arguments": "generate -m .\\isaacflie.onnx -o .\\networks\\isaacflie --target stm32f4 --c-api st-ai",
         "environment": [],
         "input_model": {
           "model_files": [
             {
-              "name": "rsl_rl.onnx",
-              "signature": "0x3a91ed5f28f4c9c0c631c9b9a6eaf135"
+              "name": "isaacflie.onnx",
+              "signature": "0x3512f44baa352d7d8ce6c95f6a14b1eb"
             }
           ],
           "n_params": 13828,
-          "name": "rsl_rl",
+          "name": "isaacflie",
           "size": 55312,
           "type": "onnx"
         },
@@ -445,7 +445,7 @@
       "inputs": [
         119
       ],
-      "name": "rsl_rl",
+      "name": "isaacflie",
       "nodes": [
         {
           "attributes": {
