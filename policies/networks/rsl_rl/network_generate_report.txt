@@ -1,0 +1,160 @@
+ST Edge AI Core v2.1.0-20194 329b0e98d
+Created date          : 2025-07-04 12:31:10
+Parameters            : generate -m .\policies\rsl_rl.onnx -o prova --target stm32f5 --c-api st-ai
+
+Exec/report summary (generate)
+----------------------------------------------------------------------------------------
+model file         :   C:\Users\mettz\uni\thesis\internship\policies\rsl_rl.onnx        
+type               :   onnx                                                             
+c_name             :   network                                                          
+compression        :   lossless                                                         
+options            :   allocate-inputs, allocate-outputs, use-lite-runtime, use-st-ai   
+optimization       :   balanced                                                         
+target/series      :   stm32f5                                                          
+workspace dir      :   C:\Users\mettz\uni\thesis\internship\st_ai_ws                    
+output dir         :   C:\Users\mettz\uni\thesis\internship\prova                       
+model_fmt          :   float                                                            
+model_name         :   rsl_rl                                                           
+model_hash         :   0x3a91ed5f28f4c9c0c631c9b9a6eaf135                               
+params #           :   13,828 items (54.02 KiB)                                         
+----------------------------------------------------------------------------------------
+input 1/1          :   'obs', f32(1x146), 584 Bytes, activations                        
+output 1/1         :   'actions', f32(1x4), 16 Bytes, activations                       
+macc               :   15,108                                                           
+weights (ro)       :   55,312 B (54.02 KiB) (1 segment)                                 
+activations (rw)   :   840 B (840 B) (1 segment) *                                      
+ram (total)        :   840 B (840 B) = 840 + 0 + 0                                      
+----------------------------------------------------------------------------------------
+(*) 'input'/'output' buffers can be used from the activations buffer
+
+Model name - rsl_rl
+------ ----------------------------------------------------- -------------- -------------- ------- -------------------------------- --- --------------- ----------------- ------------------ 
+m_id   layer (type,original)                                 oshape         param/size        macc                     connected to   | c_size          c_macc            c_type             
+------ ----------------------------------------------------- -------------- -------------- ------- -------------------------------- --- --------------- ----------------- ------------------ 
+1      actor_0_weight (Placeholder, Gemm)                    [b:64,c:146]   9,344/37,376                                              | +256(+0.7%)     +9,408(+100.0%)   Dense_[0]          
+       actor_0_bias (Placeholder, Gemm)                      [b:64]         64/256                                                    | -256(-100.0%)                     
+------ ----------------------------------------------------- -------------- -------------- ------- -------------------------------- --- --------------- ----------------- ------------------ 
+3      actor_2_weight (Placeholder, Gemm)                    [b:64,c:64]    4,096/16,384                                              | +256(+1.6%)     +4,160(+100.0%)   Dense_[2]          
+       actor_2_bias (Placeholder, Gemm)                      [b:64]         64/256                                                    | -256(-100.0%)                     
+------ ----------------------------------------------------- -------------- -------------- ------- -------------------------------- --- --------------- ----------------- ------------------ 
+5      actor_4_weight (Placeholder, Gemm)                    [b:4,c:64]     256/1,024                                                 | +16(+1.6%)      +260(+100.0%)     Dense_[o][4]       
+       actor_4_bias (Placeholder, Gemm)                      [b:4]          4/16                                                      | -16(-100.0%)                      
+------ ----------------------------------------------------- -------------- -------------- ------- -------------------------------- --- --------------- ----------------- ------------------ 
+0      obs (Input, )                                         [b:1,c:146]                                                              |                                   
+------ ----------------------------------------------------- -------------- -------------- ------- -------------------------------- --- --------------- ----------------- ------------------ 
+1      _actor_actor_0_Gemm_output_0 (Gemm, Gemm)             [b:1,c:64]                      9,408                              obs   |                 -9,408(-100.0%)   
+                                                                                                                     actor_0_weight   | 
+                                                                                                                       actor_0_bias   | 
+------ ----------------------------------------------------- -------------- -------------- ------- -------------------------------- --- --------------- ----------------- ------------------ 
+2      _actor_actor_1_Tanh_output_0 (Nonlinearity, Tanh)     [b:1,c:64]                        640     _actor_actor_0_Gemm_output_0   |                                   Nonlinearity_[1]   
+------ ----------------------------------------------------- -------------- -------------- ------- -------------------------------- --- --------------- ----------------- ------------------ 
+3      _actor_actor_2_Gemm_output_0 (Gemm, Gemm)             [b:1,c:64]                      4,160     _actor_actor_1_Tanh_output_0   |                 -4,160(-100.0%)   
+                                                                                                                     actor_2_weight   | 
+                                                                                                                       actor_2_bias   | 
+------ ----------------------------------------------------- -------------- -------------- ------- -------------------------------- --- --------------- ----------------- ------------------ 
+4      _actor_actor_1_1_Tanh_output_0 (Nonlinearity, Tanh)   [b:1,c:64]                        640     _actor_actor_2_Gemm_output_0   |                                   Nonlinearity_[3]   
+------ ----------------------------------------------------- -------------- -------------- ------- -------------------------------- --- --------------- ----------------- ------------------ 
+5      actions (Gemm, Gemm)                                  [b:1,c:4]                         260   _actor_actor_1_1_Tanh_output_0   |                 -260(-100.0%)     
+                                                                                                                     actor_4_weight   | 
+                                                                                                                       actor_4_bias   | 
+------ ----------------------------------------------------- -------------- -------------- ------- -------------------------------- --- --------------- ----------------- ------------------ 
+model/c-model: macc=15,108/15,108  weights=55,312/55,312  activations=--/840 io=--/0
+
+
+
+Generated C-graph summary
+------------------------------------------------------------------------------------------------------------------------
+model name            : rsl_rl
+c-name                : network
+c-node #              : 5
+c-array #             : 12
+activations size      : 840 (1 segment)
+weights size          : 55312 (1 segment)
+macc                  : 15108
+inputs                : ['obs_output']
+outputs               : ['actions_output']
+
+C-Arrays (12)
+------ --------------------------------------- ------------ ------------------------- ------------- --------- 
+c_id   name (*_array)                          item/size    domain/mem-pool           c-type        comment   
+------ --------------------------------------- ------------ ------------------------- ------------- --------- 
+0      _actor_actor_0_Gemm_output_0_bias       64/256       weights/weights           const float             
+1      _actor_actor_0_Gemm_output_0_output     64/256       activations/**default**   float                   
+2      _actor_actor_0_Gemm_output_0_weights    9344/37376   weights/weights           const float             
+3      _actor_actor_1_1_Tanh_output_0_output   64/256       activations/**default**   float                   
+4      _actor_actor_1_Tanh_output_0_output     64/256       activations/**default**   float                   
+5      _actor_actor_2_Gemm_output_0_bias       64/256       weights/weights           const float             
+6      _actor_actor_2_Gemm_output_0_output     64/256       activations/**default**   float                   
+7      _actor_actor_2_Gemm_output_0_weights    4096/16384   weights/weights           const float             
+8      actions_bias                            4/16         weights/weights           const float             
+9      actions_output                          4/16         activations/**default**   float         /output   
+10     actions_weights                         256/1024     weights/weights           const float             
+11     obs_output                              146/584      activations/**default**   float         /input    
+------ --------------------------------------- ------------ ------------------------- ------------- --------- 
+
+C-Layers (5)
+------ -------------------------------- ---- --------------- ------ ------- ------------------------------------------ ------------------ 
+c_id   name (*_layer)                   id   layer_type      macc   rom     tensors                                    shape (array id)   
+------ -------------------------------- ---- --------------- ------ ------- ------------------------------------------ ------------------ 
+0      _actor_actor_0_Gemm_output_0     1    Dense           9408   37632   I: obs_output                              f32(1x146) (11)    
+                                                                            W: _actor_actor_0_Gemm_output_0_weights    f32(64x146) (2)    
+                                                                            W: _actor_actor_0_Gemm_output_0_bias       f32(64) (0)        
+                                                                            O: _actor_actor_0_Gemm_output_0_output     f32(1x64) (1)      
+------ -------------------------------- ---- --------------- ------ ------- ------------------------------------------ ------------------ 
+1      _actor_actor_1_Tanh_output_0     2    Nonlinearity    640    0       I: _actor_actor_0_Gemm_output_0_output     f32(1x64) (1)      
+                                                                            O: _actor_actor_1_Tanh_output_0_output     f32(1x64) (4)      
+------ -------------------------------- ---- --------------- ------ ------- ------------------------------------------ ------------------ 
+2      _actor_actor_2_Gemm_output_0     3    Dense           4160   16640   I: _actor_actor_1_Tanh_output_0_output     f32(1x64) (4)      
+                                                                            W: _actor_actor_2_Gemm_output_0_weights    f32(64x64) (7)     
+                                                                            W: _actor_actor_2_Gemm_output_0_bias       f32(64) (5)        
+                                                                            O: _actor_actor_2_Gemm_output_0_output     f32(1x64) (6)      
+------ -------------------------------- ---- --------------- ------ ------- ------------------------------------------ ------------------ 
+3      _actor_actor_1_1_Tanh_output_0   4    Nonlinearity    640    0       I: _actor_actor_2_Gemm_output_0_output     f32(1x64) (6)      
+                                                                            O: _actor_actor_1_1_Tanh_output_0_output   f32(1x64) (3)      
+------ -------------------------------- ---- --------------- ------ ------- ------------------------------------------ ------------------ 
+4      actions                          5    Dense           260    1040    I: _actor_actor_1_1_Tanh_output_0_output   f32(1x64) (3)      
+                                                                            W: actions_weights                         f32(4x64) (10)     
+                                                                            W: actions_bias                            f32(4) (8)         
+                                                                            O: actions_output                          f32(1x4) (9)       
+------ -------------------------------- ---- --------------- ------ ------- ------------------------------------------ ------------------ 
+
+
+
+Number of operations per c-layer
+------- ------ ----------------------------------------------- -------- -------------- 
+c_id    m_id   name (type)                                          #op           type 
+------- ------ ----------------------------------------------- -------- -------------- 
+0       1      _actor_actor_0_Gemm_output_0 (Dense)               9,408   smul_f32_f32 
+1       2      _actor_actor_1_Tanh_output_0 (Nonlinearity)          640     op_f32_f32 
+2       3      _actor_actor_2_Gemm_output_0 (Dense)               4,160   smul_f32_f32 
+3       4      _actor_actor_1_1_Tanh_output_0 (Nonlinearity)        640     op_f32_f32 
+4       5      actions (Dense)                                      260   smul_f32_f32 
+------- ------ ----------------------------------------------- -------- -------------- 
+total                                                            15,108 
+
+Number of operation types
+---------------- -------- ----------- 
+operation type          #           % 
+---------------- -------- ----------- 
+smul_f32_f32       13,828       91.5% 
+op_f32_f32          1,280        8.5% 
+
+Complexity report (model)
+------ -------------------------------- ------------------------- ------------------------- ------ 
+m_id   name                             c_macc                    c_rom                     c_id   
+------ -------------------------------- ------------------------- ------------------------- ------ 
+1      actor_0_weight                   ||||||||||||||||  62.3%   ||||||||||||||||  68.0%   [0]    
+3      actor_2_weight                   |||||||           27.5%   |||||||           30.1%   [2]    
+5      actor_4_weight                   |                  1.7%   |                  1.9%   [4]    
+2      _actor_actor_1_Tanh_output_0     ||                 4.2%   |                  0.0%   [1]    
+4      _actor_actor_1_1_Tanh_output_0   ||                 4.2%   |                  0.0%   [3]    
+------ -------------------------------- ------------------------- ------------------------- ------ 
+macc=15,108 weights=55,312 act=840 ram_io=0
+
+Generated files (5)
+-------------------------------------------------------------- 
+C:\Users\mettz\uni\thesis\internship\prova\network_data.h      
+C:\Users\mettz\uni\thesis\internship\prova\network_data.c      
+C:\Users\mettz\uni\thesis\internship\prova\network.h           
+C:\Users\mettz\uni\thesis\internship\prova\network.c           
+C:\Users\mettz\uni\thesis\internship\prova\network_details.h   
