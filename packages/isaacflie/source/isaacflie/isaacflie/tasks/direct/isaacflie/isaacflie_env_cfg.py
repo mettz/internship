@@ -49,6 +49,7 @@ class IsaacflieEnvCfg(DirectRLEnvCfg):
     scene: InteractiveSceneCfg = InteractiveSceneCfg(
         num_envs=4096, env_spacing=2.5, replicate_physics=True
     )
+    env_offset = [0.0, 0.0, 10.0]
 
     # robot
     robot: ArticulationCfg = CRAZYFLIE_CFG.replace(prim_path="/World/envs/env_.*/Robot")
@@ -88,6 +89,18 @@ class IsaacflieEnvCfg(DirectRLEnvCfg):
         "velocity": 0.001,
         "linear_velocity": 0.002,
         "angular_velocity": 0.002,
+    }
+    curriculum_update_interval = 100000
+
+    initialization_params = {
+        "guidance": 0.1,
+        "position": 0.2,
+        "orientation": 90.0 / 180.0 * 3.14,
+        "linear_velocity": 1.0,
+        "angular_velocity": 1.0,
+        "relative_rpm": True,
+        "min_rpm": 0,
+        "max_rpm": 0,
     }
 
     reward_params = {
