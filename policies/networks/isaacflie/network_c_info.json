@@ -333,42 +333,42 @@
   ],
   "environment": {
     "generated_model": {
-      "generated_time": "2025-07-04T22:41:20+0200",
+      "generated_time": "2025-07-05T21:44:03+0200",
       "model_files": [
         {
           "name": "network_data.h",
-          "signature": "0x8f632e6c1c5dabdd6556a3c6b44a9f05"
+          "signature": "0xa5f188ac3f2984f07bf619cd682bcff3"
         },
         {
           "name": "network_data.c",
-          "signature": "0x349938e408a5d023ee99ef1302622843"
+          "signature": "0x6da59f8226961010e26ddf21149742c2"
         },
         {
           "name": "network.h",
-          "signature": "0x76c439534e9a60c60ffbffac931016b2"
+          "signature": "0x990b59cd8adb7f6da740fc6edd7d2fb1"
         },
         {
           "name": "network.c",
-          "signature": "0x420c9411bc8e7370959735e7e9dddceb"
+          "signature": "0xaff6f4a3dd86dd3a2ac2bb32b46b2ae7"
         },
         {
           "name": "network_details.h",
-          "signature": "0xe3d9edb7ea9e95526fba9472d499507c"
+          "signature": "0x3c152192abd1f09c487ec002b0b4382d"
         }
       ],
       "name": "network"
     },
-    "network_signature": "0xe85f1286bbd3143c",
+    "network_signature": "0x32da70121abc3ee7",
     "test_name": "",
     "tools": [
       {
-        "arguments": "generate -m .\\isaacflie.onnx -o .\\networks\\isaacflie --target stm32f4 --c-api st-ai",
+        "arguments": "generate -m .\\policies\\isaacflie.onnx -o .\\policies\\networks\\isaacflie --target stm32f4 --c-api st-ai --no-workspace",
         "environment": [],
         "input_model": {
           "model_files": [
             {
               "name": "isaacflie.onnx",
-              "signature": "0x3512f44baa352d7d8ce6c95f6a14b1eb"
+              "signature": "0xa673a4e212958f19208740d48dd00e3e"
             }
           ],
           "n_params": 13828,
