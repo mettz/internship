@@ -29,6 +29,7 @@
             (python3.withPackages (
               p: with p; [
                 cflib
+                onnxruntime
               ]
             ))
           ];
