@@ -1,5 +1,5 @@
 ST Edge AI Core v2.1.0-20194 329b0e98d
-Created date          : 2025-07-05 21:44:03
+Created date          : 2025-07-06 15:50:21
 Parameters            : generate -m .\policies\isaacflie.onnx -o .\policies\networks\isaacflie --target stm32f4 --c-api st-ai --no-workspace
 
 Exec/report summary (generate)

@@ -125,6 +125,8 @@ class IsaacflieEnv(DirectRLEnv):
         self._prev_lin_vel = self._robot.data.root_lin_vel_b.clone()
         self._prev_ang_vel = self._robot.data.root_ang_vel_b.clone()
 
+        print(f"Actions: {actions[0]}")
+
         self._actions = actions.clone().clamp(-1.0, 1.0)
         self._action_history = torch.roll(self._action_history, shifts=-1, dims=1)
         self._action_history[:, -1, :] = self._actions
