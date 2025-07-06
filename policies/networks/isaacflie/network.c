@@ -2,7 +2,7 @@
   ******************************************************************************
   * @file    network.c
   * @author  AST Embedded Analytics Research Platform
-  * @date    2025-07-06T15:50:21+0200
+  * @date    2025-07-06T22:04:11+0200
   * @brief   AI Tool Automatic Code Generator for Embedded NN computing
   ******************************************************************************
   * @attention
@@ -25,9 +25,9 @@
 #include "network_data.h"
 #include "stai_events.h"
 
-#include "ai_lite_inspect.h"
-
 #include "lite_operators.h"
+
+#include "ai_lite_inspect.h"
 /*****************************************************************************/
 #define STAI_INTERNAL_API_MAJOR               (1)
 #define STAI_INTERNAL_API_MINOR               (0)
@@ -152,8 +152,8 @@
 
 
 /*****************************************************************************/
-#define _STAI_NETWORK_MODEL_SIGNATURE     "0xa673a4e212958f19208740d48dd00e3e"
-#define _STAI_NETWORK_DATETIME            "2025-07-06T15:50:21+0200"
+#define _STAI_NETWORK_MODEL_SIGNATURE     "0xbe26c1ea17eff7ecf047d4afe3c452d7"
+#define _STAI_NETWORK_DATETIME            "2025-07-06T22:04:11+0200"
 #define _STAI_NETWORK_COMPILE_DATETIME    __DATE__ " " __TIME__
 
 #define _STAI_CONTEXT_ALIGNMENT        (STAI_NETWORK_CONTEXT_ALIGNMENT)
@@ -354,7 +354,7 @@ stai_return_code stai_network_run(
                   STAI_ERROR_NETWORK_INVALID_WEIGHTS_PTR, net_ctx->_return_code)
 
 
-  /* LITE_KERNEL_SECTION BEGIN _actor_actor_0_Gemm_output_0 */
+  /* LITE_KERNEL_SECTION BEGIN _actor_actor_mlp_actor_mlp_0_Gemm_output_0 */
   {
       forward_lite_dense_if32of32wf32_args arg_30f51e = {
       .output = (float*)(net_ctx->_activations[0] + 584),
@@ -372,8 +372,8 @@ stai_return_code stai_network_run(
     
   _STAI_NETWORK_EVENT_NODE_STOP_CB(1, 1, {(stai_ptr) (float*)(net_ctx->_activations[0] + 584)});
   }
-  /* LITE_KERNEL_SECTION END _actor_actor_0_Gemm_output_0 */
-  /* LITE_KERNEL_SECTION BEGIN _actor_actor_1_Tanh_output_0 */
+  /* LITE_KERNEL_SECTION END _actor_actor_mlp_actor_mlp_0_Gemm_output_0 */
+  /* LITE_KERNEL_SECTION BEGIN _actor_actor_mlp_actor_mlp_1_Tanh_output_0 */
   {
       ai_handle t_out_0_ptr_handle = (ai_handle)(net_ctx->_activations[0] + 0);
     const ai_handle t_in_0_ptr_const_handle = (ai_handle)(net_ctx->_activations[0] + 584);
@@ -385,8 +385,8 @@ stai_return_code stai_network_run(
     
   _STAI_NETWORK_EVENT_NODE_STOP_CB(2, 1, {(stai_ptr) t_out_0_ptr_handle});
   }
-  /* LITE_KERNEL_SECTION END _actor_actor_1_Tanh_output_0 */
-  /* LITE_KERNEL_SECTION BEGIN _actor_actor_2_Gemm_output_0 */
+  /* LITE_KERNEL_SECTION END _actor_actor_mlp_actor_mlp_1_Tanh_output_0 */
+  /* LITE_KERNEL_SECTION BEGIN _actor_actor_mlp_actor_mlp_2_Gemm_output_0 */
   {
       forward_lite_dense_if32of32wf32_args arg_30f51e = {
       .output = (float*)(net_ctx->_activations[0] + 256),
@@ -404,8 +404,8 @@ stai_return_code stai_network_run(
     
   _STAI_NETWORK_EVENT_NODE_STOP_CB(3, 1, {(stai_ptr) (float*)(net_ctx->_activations[0] + 256)});
   }
-  /* LITE_KERNEL_SECTION END _actor_actor_2_Gemm_output_0 */
-  /* LITE_KERNEL_SECTION BEGIN _actor_actor_1_1_Tanh_output_0 */
+  /* LITE_KERNEL_SECTION END _actor_actor_mlp_actor_mlp_2_Gemm_output_0 */
+  /* LITE_KERNEL_SECTION BEGIN _actor_actor_mlp_actor_mlp_3_Tanh_output_0 */
   {
       ai_handle t_out_0_ptr_handle = (ai_handle)(net_ctx->_activations[0] + 0);
     const ai_handle t_in_0_ptr_const_handle = (ai_handle)(net_ctx->_activations[0] + 256);
@@ -417,11 +417,11 @@ stai_return_code stai_network_run(
     
   _STAI_NETWORK_EVENT_NODE_STOP_CB(4, 1, {(stai_ptr) t_out_0_ptr_handle});
   }
-  /* LITE_KERNEL_SECTION END _actor_actor_1_1_Tanh_output_0 */
-  /* LITE_KERNEL_SECTION BEGIN actions */
+  /* LITE_KERNEL_SECTION END _actor_actor_mlp_actor_mlp_3_Tanh_output_0 */
+  /* LITE_KERNEL_SECTION BEGIN _actor_mu_Gemm_output_0 */
   {
       forward_lite_dense_if32of32wf32_args arg_30f51e = {
-      .output = (float*)(net_ctx->_outputs[0] + 0),
+      .output = (float*)(net_ctx->_activations[0] + 256),
       .input = (float*)(net_ctx->_activations[0] + 0),
       .weights = (float*)(net_ctx->_weights[0] + 54272),
       .bias = (float*)(net_ctx->_weights[0] + 55296),
@@ -434,7 +434,20 @@ stai_return_code stai_network_run(
     
   forward_lite_dense_if32of32wf32((forward_lite_dense_if32of32wf32_args*)&arg_30f51e);
     
-  _STAI_NETWORK_EVENT_NODE_STOP_CB(5, 1, {(stai_ptr) (float*)(net_ctx->_outputs[0] + 0)});
+  _STAI_NETWORK_EVENT_NODE_STOP_CB(5, 1, {(stai_ptr) (float*)(net_ctx->_activations[0] + 256)});
+  }
+  /* LITE_KERNEL_SECTION END _actor_mu_Gemm_output_0 */
+  /* LITE_KERNEL_SECTION BEGIN actions */
+  {
+      ai_handle t_out_0_ptr_handle = (ai_handle)(net_ctx->_outputs[0] + 0);
+    const ai_handle t_in_0_ptr_const_handle = (ai_handle)(net_ctx->_activations[0] + 256);
+    const ai_i32 t_in_0_shape_ch_prod_const_s32 = 4;
+  
+  _STAI_NETWORK_EVENT_NODE_START_CB(6, 1, {(stai_ptr) t_in_0_ptr_const_handle});
+    
+  forward_lite_nl_tanh_if32of32(t_out_0_ptr_handle, t_in_0_ptr_const_handle, t_in_0_shape_ch_prod_const_s32, NULL);
+    
+  _STAI_NETWORK_EVENT_NODE_STOP_CB(6, 1, {(stai_ptr) t_out_0_ptr_handle});
   }
   /* LITE_KERNEL_SECTION END actions */
   return net_ctx->_return_code;
@@ -574,7 +587,7 @@ const uintptr_t _activations_alignment[] = STAI_NETWORK_ACTIVATIONS_ALIGNMENTS;
   }
   net_ctx->_inputs[0] = activations[0] + 0;
 
-  net_ctx->_outputs[0] = activations[0] + 256;
+  net_ctx->_outputs[0] = activations[0] + 0;
 _stai_network_check(net_ctx);
   return net_ctx->_return_code;
 }

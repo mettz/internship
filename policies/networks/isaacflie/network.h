@@ -2,7 +2,7 @@
   ******************************************************************************
   * @file    network.h
   * @author  AST Embedded Analytics Research Platform
-  * @date    2025-07-06T15:50:21+0200
+  * @date    2025-07-06T22:04:11+0200
   * @brief   ST.AI Tool Automatic Code Generator for Embedded NN computing
   ******************************************************************************
   * @attention
@@ -24,11 +24,11 @@
 /*****************************************************************************/
 /*  Original model name and signature  */
 #define STAI_NETWORK_ORIGIN_MODEL_NAME         "isaacflie"
-#define STAI_NETWORK_ORIGIN_MODEL_SIGNATURE    "0xa673a4e212958f19208740d48dd00e3e"
+#define STAI_NETWORK_ORIGIN_MODEL_SIGNATURE    "0xbe26c1ea17eff7ecf047d4afe3c452d7"
 
 /*  Generated model name and signature  */
 #define STAI_NETWORK_MODEL_NAME                "network"
-#define STAI_NETWORK_MODEL_SIGNATURE           (0xeca33995b3dff9cb)
+#define STAI_NETWORK_MODEL_SIGNATURE           (0x9e04203a59e86e61)
 
 
 /*****************************************************************************/
@@ -40,10 +40,10 @@
 #define STAI_NETWORK_FLAGS               (STAI_FLAG_INPUTS|STAI_FLAG_OUTPUTS|STAI_FLAG_WEIGHTS)
 
 /*  Macro to declare number of network C nodes generated  */
-#define STAI_NETWORK_NODES_NUM           (5)
+#define STAI_NETWORK_NODES_NUM           (6)
 
 /*  Macro to declare number macc for generated network model  */
-#define STAI_NETWORK_MACC_NUM            (15108)
+#define STAI_NETWORK_MACC_NUM            (15148)
 
 /*  Macros to declare input buffers characteristics  */
 #define STAI_NETWORK_IN_NUM              (1)
