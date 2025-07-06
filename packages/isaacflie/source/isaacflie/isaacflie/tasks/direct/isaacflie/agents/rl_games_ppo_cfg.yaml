@@ -46,7 +46,7 @@ params:
     multi_gpu: False
     ppo: True
     mixed_precision: False
-    normalize_input: True
+    normalize_input: False
     normalize_value: True
     value_bootstrap: True
     num_actors: -1  # configured from the script (based on num_envs)

@@ -1,5 +1,5 @@
 ST Edge AI Core v2.1.0-20194 329b0e98d
-Created date          : 2025-07-06 22:04:11
+Created date          : 2025-07-06 23:31:01
 Parameters            : generate -m .\policies\isaacflie.onnx -o .\policies\networks\isaacflie --target stm32f4 --c-api st-ai --no-workspace
 
 Exec/report summary (generate)
@@ -15,7 +15,7 @@ workspace dir      :   C:\Users\mettz\AppData\Local\Temp\stedgeai_workspace
 output dir         :   C:\Users\mettz\uni\thesis\internship\policies\networks\isaacflie   
 model_fmt          :   float                                                              
 model_name         :   isaacflie                                                          
-model_hash         :   0xbe26c1ea17eff7ecf047d4afe3c452d7                                 
+model_hash         :   0xb06ac55f23ec3120fce5fa4d9576833d                                 
 params #           :   13,828 items (54.02 KiB)                                           
 ------------------------------------------------------------------------------------------
 input 1/1          :   'obs', f32(1x146), 584 Bytes, activations                          
