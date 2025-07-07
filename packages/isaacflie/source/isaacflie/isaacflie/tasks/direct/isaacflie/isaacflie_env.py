@@ -158,19 +158,19 @@ class IsaacflieEnv(DirectRLEnv):
         rot_mat = matrix_from_quat(self._robot.data.root_quat_w)
         rot_mat_flat = rot_mat.view(self.num_envs, 9)
 
-        common_obs = torch.cat(
-            [
-                position,
-                rot_mat_flat,
-                self._robot.data.root_lin_vel_b,
-                self._robot.data.root_ang_vel_b,
-            ],
-            dim=-1,
-        )
-
         actor_obs = torch.cat(
             [
-                common_obs,
+                position
+                + torch.randn_like(position) * self.cfg.observation_noise["position"],
+                rot_mat_flat
+                + torch.randn_like(rot_mat_flat)
+                * self.cfg.observation_noise["orientation"],
+                self._robot.data.root_lin_vel_b
+                + torch.randn_like(self._robot.data.root_lin_vel_b)
+                * self.cfg.observation_noise["linear_velocity"],
+                self._robot.data.root_ang_vel_b
+                + torch.randn_like(self._robot.data.root_ang_vel_b)
+                * self.cfg.observation_noise["angular_velocity"],
                 self._action_history.view(self.num_envs, -1),
             ],
             dim=-1,
@@ -182,7 +182,10 @@ class IsaacflieEnv(DirectRLEnv):
 
         critic_obs = torch.cat(
             [
-                common_obs,
+                position,
+                rot_mat_flat,
+                self._robot.data.root_lin_vel_b,
+                self._robot.data.root_ang_vel_b,
                 rpms,
             ],
             dim=-1,

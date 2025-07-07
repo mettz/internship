@@ -2,7 +2,7 @@ import onnxruntime as ort
 import numpy as np
 
 # Load the ONNX model
-session = ort.InferenceSession("policies/isaacflie.onnx")
+session = ort.InferenceSession("policies/isaacflie-noise.onnx")
 
 # Get model input details
 input_name = session.get_inputs()[0].name
@@ -27,11 +27,10 @@ obs[0, 12:15] = 0.0
 
 # Angular velocity ≈ 0
 obs[0, 15:18] = 0.0
+obs[0, 15] = 1.0
 
 # Action history = small RPM-normalized values (~0.5)
 obs[0, 18:] = 0.5
-
-print(obs)
 
 outputs = session.run(None, {input_name: obs})
 

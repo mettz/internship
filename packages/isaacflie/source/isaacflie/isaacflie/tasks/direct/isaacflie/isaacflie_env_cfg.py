@@ -86,7 +86,7 @@ class IsaacflieEnvCfg(DirectRLEnvCfg):
     action_noise = 0.0
     observation_noise = {
         "position": 0.001,
-        "velocity": 0.001,
+        "orientation": 0.001,
         "linear_velocity": 0.002,
         "angular_velocity": 0.002,
     }
